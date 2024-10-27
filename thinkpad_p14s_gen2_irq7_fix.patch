@@ -1,0 +1,30 @@
+diff --git a/drivers/acpi/resource.c b/drivers/acpi/resource.c
+index 7fe842dae1ec..cd64cc1d52c1 100644
+--- a/drivers/acpi/resource.c
++++ b/drivers/acpi/resource.c
+@@ -649,6 +649,17 @@ static const struct dmi_system_id irq1_edge_low_force_override[] = {
+ 	{ }
+ };
+ 
++
++static const struct dmi_system_id irq7_level_low_skip_override[] = {
++	{
++		/* Lenovo Thinkpad P14s gen2 21A00003CK */
++		.matches = {
++			DMI_MATCH(DMI_BOARD_NAME, "21A00003CK"),
++		},
++	},
++	{ }
++};
++
+ struct irq_override_cmp {
+ 	const struct dmi_system_id *system;
+ 	unsigned char irq;
+@@ -661,6 +672,7 @@ struct irq_override_cmp {
+ static const struct irq_override_cmp override_table[] = {
+ 	{ irq1_level_low_skip_override, 1, ACPI_LEVEL_SENSITIVE, ACPI_ACTIVE_LOW, 0, false },
+ 	{ irq1_edge_low_force_override, 1, ACPI_EDGE_SENSITIVE, ACPI_ACTIVE_LOW, 1, true },
++	{ irq7_level_low_skip_override, 7, ACPI_LEVEL_SENSITIVE, ACPI_ACTIVE_LOW, 1, false },
+ };
+ 
+ static bool acpi_dev_irq_override(u32 gsi, u8 triggering, u8 polarity,
