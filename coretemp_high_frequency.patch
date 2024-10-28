@@ -1,0 +1,15 @@
+--- a/drivers/hwmon/coretemp.c	2023-05-14 17:18:27.794966637 +0200
++++ b/drivers/hwmon/coretemp.c	2023-05-14 17:18:38.194966347 +0200
+@@ -406,11 +406,11 @@
+ 
+ 	mutex_lock(&tdata->update_lock);
+ 
+ 	tjmax = get_tjmax(tdata, dev);
+ 	/* Check whether the time interval has elapsed */
+-	if (time_after(jiffies, tdata->last_updated + HZ)) {
++	if (time_after(jiffies, tdata->last_updated + HZ / 200)) {
+ 		rdmsr_on_cpu(tdata->cpu, tdata->status_reg, &eax, &edx);
+ 		/*
+ 		 * Ignore the valid bit. In all observed cases the register
+ 		 * value is either low or zero if the valid bit is 0.
+ 		 * Return it instead of reporting an error which doesn't
