@@ -1,5 +1,5 @@
 diff --git a/drivers/input/mouse/psmouse-base.c b/drivers/input/mouse/psmouse-base.c
-index a0aac76b1..3cc39076a 100644
+index a2c9f7144..e09b28065 100644
 --- a/drivers/input/mouse/psmouse-base.c
 +++ b/drivers/input/mouse/psmouse-base.c
 @@ -368,6 +368,7 @@ static enum ps2_disposition psmouse_pre_receive_byte(struct ps2dev *ps2dev,
@@ -29,10 +29,10 @@ index a0aac76b1..3cc39076a 100644
  		}
  
 diff --git a/drivers/input/mouse/synaptics.c b/drivers/input/mouse/synaptics.c
-index ada299ec5..bec407de9 100644
+index aba57abe6..71915199b 100644
 --- a/drivers/input/mouse/synaptics.c
 +++ b/drivers/input/mouse/synaptics.c
-@@ -507,6 +507,12 @@ static const struct min_max_quirk min_max_pnpid_table[] = {
+@@ -509,6 +509,12 @@ static const struct min_max_quirk min_max_pnpid_table[] = {
  	{ }
  };
  
@@ -45,7 +45,7 @@ index ada299ec5..bec407de9 100644
  /*****************************************************************************
   *	Synaptics communications functions
   ****************************************************************************/
-@@ -626,12 +632,43 @@ static void synaptics_set_rate(struct psmouse *psmouse, unsigned int rate)
+@@ -628,12 +634,43 @@ static void synaptics_set_rate(struct psmouse *psmouse, unsigned int rate)
  /*****************************************************************************
   *	Synaptics pass-through PS/2 port support
   ****************************************************************************/
@@ -89,7 +89,7 @@ index ada299ec5..bec407de9 100644
  	error = ps2_sliced_command(&parent->ps2dev, c);
  	if (error)
  		return error;
-@@ -643,6 +680,8 @@ static int synaptics_pt_write(struct serio *serio, u8 c)
+@@ -645,6 +682,8 @@ static int synaptics_pt_write(struct serio *serio, u8 c)
  	return 0;
  }
  
@@ -98,9 +98,9 @@ index ada299ec5..bec407de9 100644
  static int synaptics_pt_start(struct serio *serio)
  {
  	struct psmouse *parent = psmouse_from_serio(serio->parent);
-@@ -652,6 +691,8 @@ static int synaptics_pt_start(struct serio *serio)
+@@ -653,6 +692,8 @@ static int synaptics_pt_start(struct serio *serio)
+ 	guard(serio_pause_rx)(parent->ps2dev.serio);
  	priv->pt_port = serio;
- 	serio_continue_rx(parent->ps2dev.serio);
  
 +	synaptics_update_protocol_handler(parent);
 +
@@ -108,15 +108,15 @@ index ada299ec5..bec407de9 100644
  }
  
 @@ -663,6 +704,8 @@ static void synaptics_pt_stop(struct serio *serio)
- 	serio_pause_rx(parent->ps2dev.serio);
+ 
+ 	guard(serio_pause_rx)(parent->ps2dev.serio);
  	priv->pt_port = NULL;
- 	serio_continue_rx(parent->ps2dev.serio);
 +
 +	synaptics_update_protocol_handler(parent);
  }
  
- static int synaptics_is_pt_packet(u8 *buf)
-@@ -690,6 +733,10 @@ static void synaptics_pt_activate(struct psmouse *psmouse)
+ static int synaptics_pt_open(struct serio *serio)
+@@ -717,6 +760,10 @@ static void synaptics_pt_activate(struct psmouse *psmouse)
  	struct synaptics_data *priv = psmouse->private;
  	struct psmouse *child = psmouse_from_serio(priv->pt_port);
  
@@ -127,7 +127,7 @@ index ada299ec5..bec407de9 100644
  	/* adjust the touchpad to child's choice of protocol */
  	if (child) {
  		if (child->pktsize == 4)
-@@ -1229,6 +1276,17 @@ static psmouse_ret_t synaptics_process_byte(struct psmouse *psmouse)
+@@ -1257,6 +1304,17 @@ static psmouse_ret_t synaptics_process_byte(struct psmouse *psmouse)
  		PSMOUSE_GOOD_DATA : PSMOUSE_BAD_DATA;
  }
  
@@ -145,7 +145,7 @@ index ada299ec5..bec407de9 100644
  /*****************************************************************************
   *	Driver initialization/cleanup functions
   ****************************************************************************/
-@@ -1401,6 +1459,52 @@ PSMOUSE_DEFINE_ATTR(disable_gesture, S_IWUSR | S_IRUGO, NULL,
+@@ -1429,6 +1487,52 @@ PSMOUSE_DEFINE_ATTR(disable_gesture, S_IWUSR | S_IRUGO, NULL,
  		    synaptics_show_disable_gesture,
  		    synaptics_set_disable_gesture);
  
@@ -198,7 +198,7 @@ index ada299ec5..bec407de9 100644
  static void synaptics_disconnect(struct psmouse *psmouse)
  {
  	struct synaptics_data *priv = psmouse->private;
-@@ -1411,10 +1515,16 @@ static void synaptics_disconnect(struct psmouse *psmouse)
+@@ -1439,10 +1543,16 @@ static void synaptics_disconnect(struct psmouse *psmouse)
  	 */
  	psmouse_smbus_cleanup(psmouse);
  
@@ -215,7 +215,7 @@ index ada299ec5..bec407de9 100644
  
  	synaptics_reset(psmouse);
  	kfree(priv);
-@@ -1441,8 +1551,17 @@ static int synaptics_reconnect(struct psmouse *psmouse)
+@@ -1469,8 +1579,17 @@ static int synaptics_reconnect(struct psmouse *psmouse)
  			 */
  			ssleep(1);
  		}
@@ -235,7 +235,7 @@ index ada299ec5..bec407de9 100644
  	} while (error && ++retry < 3);
  
  	if (error)
-@@ -1553,6 +1672,29 @@ void __init synaptics_module_init(void)
+@@ -1581,6 +1700,29 @@ void __init synaptics_module_init(void)
  	cr48_profile_sensor = dmi_check_system(cr48_dmi_table);
  }
  
@@ -265,7 +265,7 @@ index ada299ec5..bec407de9 100644
  static int synaptics_init_ps2(struct psmouse *psmouse,
  			      struct synaptics_device_info *info,
  			      bool absolute_mode)
-@@ -1611,14 +1753,7 @@ static int synaptics_init_ps2(struct psmouse *psmouse,
+@@ -1639,14 +1781,7 @@ static int synaptics_init_ps2(struct psmouse *psmouse,
  	psmouse->model = ((info->model_id & 0x00ff0000) >> 8) |
  			  (info->model_id & 0x000000ff);
  
@@ -281,7 +281,7 @@ index ada299ec5..bec407de9 100644
  
  	psmouse->set_rate = synaptics_set_rate;
  	psmouse->disconnect = synaptics_disconnect;
-@@ -1653,6 +1788,24 @@ static int synaptics_init_ps2(struct psmouse *psmouse,
+@@ -1682,6 +1817,24 @@ static int synaptics_init_ps2(struct psmouse *psmouse,
  		}
  	}
  
@@ -307,11 +307,11 @@ index ada299ec5..bec407de9 100644
  
   init_fail:
 diff --git a/drivers/input/mouse/synaptics.h b/drivers/input/mouse/synaptics.h
-index 08533d1b1..a6a50ac5b 100644
+index 3853165b6..c1a78eb29 100644
 --- a/drivers/input/mouse/synaptics.h
 +++ b/drivers/input/mouse/synaptics.h
 @@ -24,6 +24,7 @@
- /* synatics modes */
+ /* synaptics modes */
  #define SYN_BIT_ABSOLUTE_MODE		BIT(7)
  #define SYN_BIT_HIGH_RATE		BIT(6)
 +#define SYN_BIT_TRANSPARENT_MODE	BIT(5)
@@ -325,4 +325,4 @@ index 08533d1b1..a6a50ac5b 100644
 +	bool transparent_mode;			/* pass packets directly from guest */
  
  	struct serio *pt_port;			/* Pass-through serio port */
- 
+ 	bool pt_port_open;
